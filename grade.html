@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[꿈두레] 로봇 소프트웨어 개발반 특기사항 조회</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-indigo-600 p-6 text-center text-white">
+            <!-- ▼▼▼▼▼ [여기서 제목을 수정하세요] ▼▼▼▼▼ -->
+            <h1 class="text-2xl font-bold mb-2"><i class="fas fa-book-reader mr-2"></i>[로봇 소프트웨어 개발] 특기사항 조회</h1>
+            <!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
+            
+            <p class="text-indigo-100 text-sm">이름과 전화번호 뒷자리를 입력하여 내용을 확인하세요.</p>
+        </div>
+
+        <!-- Input Form -->
+        <div class="p-8 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">이름</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-user text-gray-400"></i>
+                        </div>
+                        <input type="text" id="name" 
+                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-colors" 
+                            placeholder="이름 (예: 홍길동)">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">전화번호 (뒷 4자리)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-phone text-gray-400"></i>
+                        </div>
+                        <input type="text" id="phone" maxlength="4"
+                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-colors" 
+                            placeholder="예: 1234"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="checkReview()" 
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-[1.01] shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                내용 확인하기
+            </button>
+        </div>
+
+        <!-- Result Area (Hidden initially) -->
+        <div id="resultArea" class="hidden bg-gray-50 p-8 border-t border-gray-100 fade-in">
+            <!-- Success Content -->
+            <div id="successContent" class="hidden">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-500 mb-3">
+                        <i class="fas fa-check text-xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800"><span id="resultName" class="text-indigo-600"></span> 특기사항</h2>
+                </div>
+                
+                <!-- Review Box -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative">
+                    <i class="fas fa-quote-left text-4xl text-gray-100 absolute top-4 left-4 -z-1"></i>
+                    <div class="prose max-w-none">
+                        <p id="reviewText" class="text-gray-700 leading-relaxed text-justify whitespace-pre-wrap"></p>
+                    </div>
+                </div>
+
+                <!-- 문의사항 및 설문 입력 섹션 -->
+                <div id="inquiryContainer" class="mt-8 pt-6 border-t border-gray-200 text-left">
+                    <h3 class="text-lg font-bold text-gray-800 mb-2"><i class="fas fa-poll-h text-indigo-500 mr-2"></i>설문조사</h3>
+                    <p class="text-sm text-gray-600 mb-4">아래 설문에 참여해 주세요.</p>
+                    
+                    <!-- 화면 전환 방지용 숨겨진 iframe -->
+                    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+                    
+                    <!-- 실제 폼 -->
+                    <form id="googleForm" action="" method="post" target="hidden_iframe" onsubmit="return validateForm()">
+                        <!-- 학생 이름이 자동으로 들어갈 숨겨진 필드 -->
+                        <input type="hidden" id="formNameField" name="" value="">
+                        
+                        <!-- 질문 1 -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">1. 추가(또는 수정)하기를 바라는 내용이 있다면?</label>
+                            <input type="text" id="formQ1Field" name="" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gray-50" 
+                                placeholder=" ">
+                        </div>
+
+                        <!-- 질문 2 -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">2. 제외하기를 바라는 내용은?</label>
+                            <input type="text" id="formQ2Field" name="" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gray-50" 
+                                placeholder=" ">
+                        </div>
+
+                        <!-- 질문 3 -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">3. 반드시 들어가기를 바라는 내용은?</label>
+                            <textarea id="formQ3Field" name="" rows="3" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none bg-gray-50" 
+                                placeholder=" "></textarea>
+                        </div>
+                        
+                        <button type="submit" 
+                            class="w-full flex items-center justify-center bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-sm">
+                            <i class="fas fa-paper-plane mr-2"></i> 설문 제출하기
+                        </button>
+                    </form>
+
+                    <!-- 전송 완료 메시지 -->
+                    <div id="thankYouMsg" class="hidden text-center p-6 bg-green-50 rounded-lg border border-green-100">
+                        <div class="text-green-500 text-3xl mb-2"><i class="fas fa-check-circle"></i></div>
+                        <h4 class="text-lg font-bold text-gray-800">제출되었습니다!</h4>
+                        <p class="text-sm text-gray-600">소중한 의견 감사합니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Content -->
+            <div id="errorContent" class="hidden text-center py-4">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-500 mb-4">
+                    <i class="fas fa-exclamation-triangle text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-1">조회 실패</h3>
+                <p id="errorMessage" class="text-gray-600 text-sm">입력하신 정보와 일치하는 내용이 없습니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // [필수] 구글 설문지 연결 설정
+        // ==========================================
+        const formActionUrl = "https://docs.google.com/forms/d/e/1FAIpQLSe7cObJm75oYt_qwb6hNYJkWpIB-rvqs4TQbzb4jupnd0fnJQ/formResponse"; 
+
+        const nameEntryId = "entry.605893712"; 
+        const q1EntryId   = "entry.343257485";
+        const q2EntryId   = "entry.433033407";
+        const q3EntryId   = "entry.13441856";
+
+
+        // ==========================================
+        // [학생 데이터]
+        // ==========================================
+        const database = [
+            {
+                name: "홍길동",
+                phone: "1234",
+                review: "로봇 소프트웨어의 구조와 구성 요소를 이해하고 로봇 서비스 구현을 위한 체험 활동 및 로봇 개발 프로젝트 활동에 성실히 참여함. 풀스택 개발자라는 진로 목표와 연계하여 서비스 로봇을 주제로 선정하고 구조를 이해함."
+            },
+            {
+                name: "김철수",
+                phone: "8765",
+                review: "수업 태도가 매우 바르며, 매 시간 성실하게 참여하는 학생임. 특히 그룹 활동에서 조장의 역할을 맡아 조원들의 의견을 조율하고 이끄는 리더십을 보임."
+            },
+            {
+                name: "이영희",
+                phone: "1111",
+                review: "창의적인 아이디어가 돋보이는 학생임. 주어진 과제에 대해 남들과 다른 시각으로 접근하여 독창적인 해결책을 제시하는 경우가 많음."
+            }, // <-- [중요] 여기에 쉼표를 꼭 넣어야 합니다!
+            {
+                name: "손가연",
+                phone: "4219",
+                review: "초음파 감지기를 활용한 스마트 쓰레기통과 도난 경보기, 회전 전동기 기반 3자유도 로봇팔, 자율주행 로봇, 무선 통신 원격조종 로봇 등 로봇 체험 활동에 성실히 참여하며 감지기와 구동 장치의 작동 원리를 체계적으로 학습함. 로봇 활용 사례 조사에서 식당 제공 로봇을 선정하여 위치 추정 및 지도 작성 기술, 여러 감지기의 통합 방식, 원격 기반 협업 체계 등을 탐구하고, 통합 소프트웨어 개발자라는 진로 목표와 연계하여 누리망 기반 사용자 화면부터 내장형 제어 장치까지 전체 구조를 분석함. 로봇 개발 프로젝트에서 광 감지기를 이용한 빛 추적 이동 로봇을 설계하고 360도 회전 탐색 방식을 구현하여 최적 광원을 찾는 자율 체계를 완성하였으며, 초음파 감지기를 활용한 장애물 회피 논리와 갇힘 상황 시 탈출 방식을 추가하여 복합적인 제어 체계를 구축함. 전동기의 속도 편차를 프로그램으로 보정하고 통신 간섭 문제를 해결하는 과정에서 기계 장치와 프로그램의 유기적 연동 방법을 터득하며 통합적 체계 사고력을 향상시킴. 진로 목표와 연계하여 부분이 아닌 전체를 조망하는 시각으로 학습에 임하며, 실제 발생한 기술적 문제를 스스로 분석하고 해결하는 실천적 탐구 역량을 갖춘 학생임."
+            },
+            {
+                name: "임수하",
+                phone: "9869",
+                review: "초음파 감지기를 활용한 스마트 쓰레기통과 도난 경보기, 회전 전동기 기반 3자유도 로봇팔, 자율주행 로봇, 무선 통신 원격조종 로봇 등 로봇 체험 활동에 성실히 참여하며 감지기와 구동 장치의 작동 원리를 학습함. 로봇 활용 사례 조사에서 음식 제공 로봇을 선정하여 실내 환경에서 동시적 위치 추정 및 지도 작성 기술의 원리를 분석하고, 생성형 인공지능을 활용하여 장애물 감지부터 음식 전달까지의 제공 과정을 구현한 모의 실험 프로그램을 작성함. 로봇 개발 프로젝트에서 초음파 감지기를 이용한 스마트 회피 로봇을 설계하고 일정 거리 이내 장애물 감지 시 정지, 회전, 재주행의 3단계 처리 절차를 구현하였으며, 직류 전동기의 차등 속도 제어를 통한 제자리 회전 구조를 도출함. 전압 불일치로 인한 작동 문제를 경험하였으나 포기하지 않고 전원 관리의 중요성을 깨달으며 개선 방안을 모색하는 적극적인 학습 태도를 보임. 복잡한 이론을 단순한 체계로 구현하려는 설계 역량과 로봇 기술의 확장 가능성에 대한 기대를 바탕으로 지속적인 탐구 의지를 드러냄."
+            },
+            {
+                name: "정지은",
+                phone: "6950",
+                review: "초음파 감지기를 활용한 스마트 쓰레기통과 도난 경보기, 회전 전동기 기반 3자유도 로봇팔, 자율주행 로봇, 무선 통신 원격조종 로봇 등 로봇 체험 활동에 성실히 참여하며 감지기와 구동 장치의 작동 원리를 학습함. 로봇 활용 사례 조사에서 재난 구조 로봇을 선정하여 인명 피해 최소화라는 사회적 가치를 고려한 학습 태도를 보였으며, 영상 감지기, 열화상 감지기, 화학 감지기 등 여러 감지기의 통합 방식과 실시간 제어와 고수준 인지를 위한 이중 구조 체계를 탐구함. 과학탐구실험 교과에서 설계한 감지기 기반 자동 점등 장치를 실제로 구현하고자 스마트 조명 로봇을 기획하여 조도 감지기 값에 따른 3단계 조명 제어 논리와 액정 표시 장치를 통한 밝기 시각화 기능을 설계함. 제작 과정에서 이동 장치를 제외하고 조명 제어 기능에 집중하여 완성하며 계획의 우선순위를 조정하는 현실적 판단 능력을 발휘함. 조도 감지기의 기준값 설정 과정에서 30분간 반복 실험을 통해 최종 임계값을 확정하며 감지기 보정의 중요성과 실제 환경 조건을 고려한 변수 조정 능력을 체득함. 교과 간 연계를 통해 학습한 개념을 실제로 구현하고 핵심 기능 완성에 집중하는 실천적 탐구 역량을 갖춘 학생임."
+            },
+            {
+                name: "조민주",
+                phone: "5274",
+                review: "초음파 감지기를 활용한 스마트 쓰레기통과 도난 경보기, 회전 전동기 기반 3자유도 로봇팔, 선 추적 자율주행 로봇, 무선 통신 원격조종 로봇 등 로봇 체험 활동부터 개발 프로젝트까지 전 과정에 성실히 참여하며 감지기와 구동 장치의 작동 원리를 학습함. 로봇 활용 사례 조사에서 스마트 공장 확산에 따른 물류 자동화의 필요성을 인식하고 무인 운반 차량의 경로 안내 방식과 자율 주행 원리를 탐구하였으며, 프로그래밍 언어를 활용하여 2차원 격자 기반 장애물 회피 처리 절차를 구현하고 최적 경로를 시각화하는 부호를 설계함. 로봇 개발 프로젝트에서 반려동물 가정의 화장실 청소 부담을 해결하기 위해 고양이 화장실 청소 장치를 기획하여 초음파 감지기로 고양이의 진출입을 감지하고 배설물이 굳는 시간을 고려한 시간 측정 장치를 설정하였으며, 펄스 폭 변조 방식으로 전동기 속도를 제어하고 고양이 재진입 시 즉시 정지하는 비상 안전 논리를 추가함. 로봇의 작동이 단순한 프로그래밍을 넘어 하드웨어 제약과 처리 절차 최적화가 상호 보완적으로 작용하는 복합 체계임을 체득하며 융합적 설계 역량을 향상시킴. 성실한 태도로 모든 활동에 임하며 감지기 자료 기반 실시간 피드백 체계 연구로 탐구를 확장하고자 하는 의지를 드러냄."
+            },
+            {
+                name: "종채영",
+                phone: "9934",
+                review: "로봇공학자라는 진로 목표와 연계하여 화성 탐사 차량을 탐구 주제로 선정하고 우주 환경에서 임무를 수행하는 복합 체계 구조를 심층 분석함. 험지 주행을 위한 특수 완충 장치, 방사성 동위 원소 열전 발전기, 인공지능 기반 자율 항법 체계 등 우주 탐사 로봇의 다층적 기술 요소를 조사하고 여러 감지기의 통합 자료 처리 과정을 파악하였으며, 시료 채취 천공 장치, 로봇팔, 시료 봉인 체계가 유기적으로 작동하여 화성 토양을 수집하는 과정을 순서도 처리 절차로 구현함. 로봇 개발 프로젝트에서 우주 쓰레기 수거라는 진로 연계 목표를 설정하고 자율 청소 로봇을 기획하여 초음파 감지기 기반 물체 감지, 회전 전동기 파지 장치, 무선 통신 원격 제어 기능을 설계하고 전자 회로 설계에서 단자 배치와 신호 흐름을 체계적으로 계획함. 제작 과정에서 생성형 인공지능과 회로 설계 도구를 적극 활용하여 기술적 문제를 해결하며 디지털 도구 활용 역량을 발휘하였고, 계획대로 진행되지 않을 때 우회 방법을 모색하는 유연한 사고력을 보임. 우주 탐사라는 일관된 관심사를 중심으로 이론 탐구부터 실제 제작까지 연결하며 진로 목표를 구체화하는 주도적 학습 태도를 지닌 학생임."
+            },
+            {
+                name: "양준서",
+                phone: "6341",
+                review: "감지기와 구동기를 활용한 스마트 쓰레기통, 도난 경보기, 3자유도 로봇 팔, 자율주행 로봇, 무선 조종 로봇 등을 단계적으로 제작하며 전자 회로와 제어 부호의 연계성을 체득하고 작동 원리를 정확히 이해함. 로봇 활용 사례 조사에서 자가 발진형 유연 로봇을 선정하여 공기압과 물리 법칙만으로 자율 이동이 구현되는 원리를 탐구하고 공기 펌프 제어 명령문을 직접 작성하여 단순한 물리 현상이 지능적 동작으로 전환되는 과정을 분석함. 로봇 개발 프로젝트에서 조도 감지기와 사람 감지기를 결합한 자동 커튼 장치를 설계하고 다단계 개폐 조건을 구현하였으며, 간이 모형의 빛 누출 문제를 발견하고 밝기 기준값을 반복 조정하며 감지기 보정의 중요성을 체득하여 계획한 동작을 수행하는 장치를 완성함. 제어 장치 부호 작성 및 기계 장치 통합 능력이 탁월하며, 설계 단계에서 예측하지 못한 구조적 한계를 실제 제작 과정에서 발견하고 반복적인 실험을 통해 최적값을 도출하는 실증적 문제 해결 능력을 갖추어, 이론적 계획과 실제 구현 사이의 간극을 체계적으로 메우며 완성도 높은 결과물을 창출하는 역량을 지닌 학생임."
+            },
+            {
+                name: "고세윤",
+                phone: "6083",
+                review: "항공우주공학자라는 진로 목표와 연계하여 고고도 장기체공 무인정찰기를 탐구 주제로 선정하고 위성 위치 확인 장치와 관성 항법 장치를 결합한 자율비행 체계, 합성 개구 레이더의 마이크로파 반사 원리, 터보팬 엔진 구동 방식 등 복합적인 항공 기술 요소를 체계적으로 분석함. 제어 장치부터 통신 장치까지 체계 구성 요소를 상세히 파악하고 생성형 인공지능을 활용하여 객체지향 방식 기반의 임무 모의 실험 부호를 작성하여 연료 소모량, 고도 변화, 경유 지점 순회 등을 논리적으로 구현함. 로봇 개발 프로젝트에서는 에너지 절약과 고령자 편의를 고려한 자동 야간 조명 시스템을 구상하여 초음파 센서의 거리 측정 원리와 조도센서 연계 작동 방식을 고려한 전자회로를 체계적으로 설계함. 프로젝트 전 과정에서 성실하게 참여하며 로봇 소프트웨어 개발에 대한 이해를 넓히고자 노력하는 태도를 보임. 각 장치의 작동 원리를 수학적·물리학적 개념과 연결하여 이해하려는 탐구 태도가 돋보이는 학생임."
+            },
+            {
+                name: "김주원",
+                phone: "8742",
+                review: "로봇팔, 자율주행 로봇, 무선 통신 원격조종 로봇 등 센서와 구동 장치를 활용한 다양한 로봇 제작 활동에서 우수한 성취 수준을 보이며, 회로 연결 오류 발생 시 학습 자료를 스스로 참고하여 원인을 분석하고 해결하는 능동적 문제 해결 태도를 지님. 로봇 활용 사례 조사에서 음식 제공 로봇을 선정하여 위성 위치 확인 장치 없이 실내 자율주행이 가능한 동시적 위치 추정 및 지도 작성 기술의 원리를 탐구하고, 깊이 인식 영상 감지기와 거리 측정 장치가 수집한 정보를 통합하여 실시간 지도를 생성하는 과정을 논리적으로 정리하며 해당 기술의 3차원 공중 이동 수단 확장 가능성까지 고찰함. 로봇 개발 프로젝트에서 고령자와 허리 질환자를 위한 물건 줍기 도우미 로봇을 기획하여 이동 응용 개발 도구 기반 사용자 화면을 설계하고 무선 통신으로 명령을 전송하는 체계를 구축하였으며, 주사기 유압 프레스 원리를 적용한 팔 승강 장치와 실 도르래 방식의 집게 개폐 구조를 설계함. 제작 과정에서 우레탄 실의 마찰 문제와 집게 복원력 부족을 발견하고 스프링 추가를 통한 개선 방안을 도출하며 계획과 실제 사이의 간극을 메우는 과정이 진정한 공학 설계임을 체득함. 자기주도적으로 문제를 발견하고 해결 방안을 모색하는 프로젝트 수행 능력이 우수한 학생임."
+            },
+            {
+                name: "최수아",
+                phone: "0272",
+                review: "다양한 로봇 체험 활동을 통해 로봇 소프트웨어의 구조와 구성 요소를 이해하고, 로봇 서비스 구현을 위한 자료 조사 및 로봇 개발 프로젝트 활동에 성실히 참여함. 마이크로컨트롤러와 회전 구동기 3개를 활용하여 회전부, 상하부, 집게부로 구성된 매니퓰레이터를 설계하며 구상도 작성부터 전자 회로 구성과 제어 부호 작성, 기계 장치 제작까지 체계적인 제작 과정을 경험함. 로봇 활용 사례 조사에서 문어 팔의 움직임에서 영감을 받은 나선형 유연 로봇을 선정하고 복잡한 전자 부품 없이 선재 장력 제어만으로 동작을 구현하는 원리를 분석하며 로봇의 지능이 물리적 구조 자체에 내재될 수 있다는 생체모방 로봇 공학의 원리를 이해함. 로봇 개발 프로젝트에서는 쓰레기 자동 수거 로봇을 구상하여 영상 기반 물체 인식, 낙하 위치 계산, 자율 이동, 쓰레기통 자동 비우기 등 다층적 자율 체계를 설계함. 필요한 전자 부품을 직접 준비하고 납땜 작업과 회로 수정을 반복하며 끈기 있게 프로젝트를 완성하고자 노력하는 태도를 보였으며, 영어 논문 원서를 읽으며 자연의 원리가 공학적으로 구현되는 과정을 탐구하고 체계적인 제작 경험을 통해 로봇 공학의 기초 역량을 갖춘 학생임."
+            }
+        ];
+
+        // 폼 전송 상태 변수
+        var submitted = false;
+
+        // Iframe 로드 이벤트 리스너
+        window.onload = function() {
+            const iframe = document.getElementById('hidden_iframe');
+            if(iframe) {
+                iframe.onload = function() {
+                    if (submitted) {
+                        showSuccessMsg();
+                    }
+                };
+            }
+        };
+
+        function validateForm() {
+            if (!formActionUrl || formActionUrl === "" || !formActionUrl.includes("formResponse")) {
+                alert("설정 오류: 설문지 주소가 올바르지 않습니다.\n주소가 'formResponse'로 끝나는지 확인해주세요!");
+                return false;
+            }
+            submitted = true;
+            return true;
+        }
+
+        function checkReview() {
+            const nameInput = document.getElementById('name').value.trim();
+            const phoneInput = document.getElementById('phone').value.trim();
+            
+            const resultArea = document.getElementById('resultArea');
+            const successContent = document.getElementById('successContent');
+            const errorContent = document.getElementById('errorContent');
+            const reviewText = document.getElementById('reviewText');
+
+            // 초기화
+            resultArea.classList.add('hidden');
+            successContent.classList.add('hidden');
+            errorContent.classList.add('hidden');
+            document.getElementById('thankYouMsg').classList.add('hidden');
+            document.getElementById('googleForm').classList.remove('hidden');
+            
+            // 입력 필드 초기화
+            document.getElementById('formQ1Field').value = '';
+            document.getElementById('formQ2Field').value = '';
+            document.getElementById('formQ3Field').value = '';
+            
+            submitted = false;
+            
+            // 유효성 검사
+            if (!nameInput || !phoneInput) {
+                showError("이름과 전화번호를 모두 입력해주세요.");
+                return;
+            }
+
+            if (phoneInput.length !== 4) {
+                showError("전화번호는 마지막 4자리 숫자여야 합니다.");
+                return;
+            }
+
+            // 데이터 검색
+            const student = database.find(item => item.name === nameInput && item.phone === phoneInput);
+
+            // 잠시 로딩 효과
+            setTimeout(() => {
+                resultArea.classList.remove('hidden');
+                
+                if (student) {
+                    // 조회 성공
+                    document.getElementById('resultName').innerText = student.name;
+                    document.getElementById('reviewText').innerText = student.review;
+                    
+                    // 폼 설정
+                    setupForm(student.name);
+
+                    successContent.classList.remove('hidden');
+                } else {
+                    // 조회 실패
+                    showError("일치하는 학생 정보가 없습니다.<br>입력하신 정보를 다시 확인해주세요.");
+                }
+            }, 300);
+        }
+
+        function setupForm(studentName) {
+            const form = document.getElementById('googleForm');
+            const nameField = document.getElementById('formNameField');
+            
+            const q1Field = document.getElementById('formQ1Field');
+            const q2Field = document.getElementById('formQ2Field');
+            const q3Field = document.getElementById('formQ3Field');
+
+            // 폼 속성 연결
+            if (formActionUrl && formActionUrl !== "") {
+                form.action = formActionUrl;
+                
+                nameField.name = nameEntryId;
+                nameField.value = studentName; 
+                
+                q1Field.name = q1EntryId;
+                q2Field.name = q2EntryId;
+                q3Field.name = q3EntryId;
+            } else {
+                q3Field.placeholder = "⚠️ 선생님, 코드에서 formActionUrl 설정을 확인해주세요.";
+            }
+        }
+
+        function showSuccessMsg() {
+            document.getElementById('googleForm').classList.add('hidden');
+            document.getElementById('thankYouMsg').classList.remove('hidden');
+            document.getElementById('thankYouMsg').classList.add('fade-in');
+        }
+
+        function showError(message) {
+            const resultArea = document.getElementById('resultArea');
+            const errorContent = document.getElementById('errorContent');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            resultArea.classList.remove('hidden');
+            errorContent.classList.remove('hidden');
+            errorMessage.innerHTML = message;
+        }
+
+        // Enter 키 입력 시 조회 실행
+        document.getElementById('phone').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') checkReview();
+        });
+        document.getElementById('name').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') checkReview();
+        });
+    </script>
+</body>
+</html>
